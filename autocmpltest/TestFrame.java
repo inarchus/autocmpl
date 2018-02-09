@@ -7,8 +7,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import java.io.*;
-import java.util.Vector;
-import java.util.regex.*;
 import javax.swing.*;
 import java.awt.event.*;
 
@@ -16,6 +14,8 @@ import javax.swing.border.SoftBevelBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 
+//import java.util.Vector; Moved to SearchThread
+//import java.util.regex.*;
 
 /*
  * This TestFrame class serves as a relatively easy way to enter training and query data and get results in a readable way.  
@@ -37,6 +37,9 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 	//JProgressBar progress_loading;
 	JList options_display;
 	JLabel bottom_info;
+	// used to prevent bad timing in searches from redrawing list with old data.  
+	long current_priority = 0;
+	long future_priority = 0;
 	
 	public TestFrame()
 	{
@@ -195,35 +198,9 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 	 */
 	public void caretUpdate(CaretEvent arg0) {
 		String current_text = query_field.getText();
-		String current_word = "";
-		
-		Pattern word_pattern = Pattern.compile("[a-zA-Z]+([-_][a-zA-Z]+)*([']??[a-zA-Z]+)??");
-		Matcher word_matcher = word_pattern.matcher(current_text);
-		while(word_matcher.find())
-		{
-			current_word = word_matcher.group();
-			// System.out.println(current_word);
-		}
-		Vector<Candidate> candidates = acp.getWords(current_word);
-		String tooltip_text = "<html>";
-		DefaultListModel dlm = new DefaultListModel();
-		for(int i = 0; i < candidates.size(); i++)
-		{
-			dlm.addElement(new String(candidates.elementAt(i).getWord() + " " + candidates.elementAt(i).getConfidence().toString()));
-			tooltip_text += candidates.elementAt(i).getWord() + " " + candidates.elementAt(i).getConfidence() + "<br>"; 
-
-			// System.out.println(candidates.elementAt(i).getWord() + " " + candidates.elementAt(i).getConfidence());
-		}
-		
-		options_display.setModel(dlm);
-		if(candidates.size() == 0)
-		{
-			tooltip_text += "No Suggestions";
-		}
-		tooltip_text += "</html>";
-		query_field.setToolTipText(tooltip_text);
-		
-		
+		future_priority++;
+		SearchThread st = new SearchThread(acp, current_text, options_display, query_field, this, future_priority);
+		st.start();
 	}
 
 	/*
@@ -251,38 +228,8 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 				File text_file = fc.getSelectedFile();
 				if(text_file.exists() && text_file.canRead())
 				{
-					// these are only needed if we're going to use the progress bar for file loads.  
-					//long total_size = text_file.length();
-					//long count_size = 0;
-					try {
-						//progress_loading.setStringPainted(true);
-						//progress_loading.setMaximum(100);
-						
-						BufferedReader reader = new BufferedReader(new FileReader(text_file));
-						String text_line = reader.readLine();
-						while(text_line != null)
-						{
-							acp.train(text_line);
-							// count_size += text_line.length();
-
-							
-							//progress_loading.setValue((int) (count_size * 100 / total_size));
-							text_line = reader.readLine();							
-						}
-						//progress_loading.setValue((int) 100);
-						bottom_info.setText("Training Data Entered from " + text_file.getName());
-						
-					} 
-					catch (FileNotFoundException e) 
-					{
-					} 
-					catch (IOException e) 
-					{
-					}
-					finally
-					{
-						
-					}
+					TrainingThread load_file_and_train = new TrainingThread(bottom_info, text_file, acp);
+					load_file_and_train.start();
 				}
 			}
 			else if (event.getSource() == max_size_item)
@@ -350,6 +297,15 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 	    }
 	    catch (IllegalAccessException e) {
 	    }
+	}
+	
+	public void setPriority(long new_priority)
+	{
+		current_priority = new_priority;
+	}
+	public long getPriority()
+	{
+		return current_priority ;
 	}
 	/**
 	 * Automated Eclipse serial UID 

@@ -43,7 +43,7 @@ public class AutocompleteProvider {
      */
 	public void train(String passage)
 	{
-		Pattern word_pattern = Pattern.compile("[a-zA-Z]+([-_][a-zA-Z]+)*([']??[a-zA-Z]+)??");
+		Pattern word_pattern = Pattern.compile("[a-zA-Z]+([-_][a-zA-Z]+)*('[a-zA-Z]+)?");
 		Matcher word_matcher = word_pattern.matcher(passage);
 		String current_word;
 		
