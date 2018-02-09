@@ -19,9 +19,9 @@ public class SearchThread extends Thread {
 	TestFrame our_frame = null;
 	long priority = 0;
 	
-	public SearchThread(AutocompleteProvider t_acp, String t_current_word, JList t_options_display, JTextArea t_query_field, TestFrame t_our_frame, long t_priority)
+	public SearchThread(AutocompleteProvider t_acp, String t_current_text, JList t_options_display, JTextArea t_query_field, TestFrame t_our_frame, long t_priority)
 	{
-		current_text = t_current_word;
+		current_text = t_current_text;
 		acp = t_acp;
 		options_display = t_options_display;
 		query_field = t_query_field;
@@ -30,8 +30,9 @@ public class SearchThread extends Thread {
 	}
 	public void run()
 	{
-		if(acp != null && query_field != null && query_field != null)
+		if(acp != null && query_field != null && query_field != null && our_frame != null)
 		{
+			//System.out.println(current_text + " " + priority);
 			String current_word = "";
 			Pattern word_pattern = Pattern.compile("[a-zA-Z]+([-_][a-zA-Z]+)*('[a-zA-Z]+)?");
 			Matcher word_matcher = word_pattern.matcher(current_text);
@@ -42,17 +43,21 @@ public class SearchThread extends Thread {
 			Vector<Candidate> candidates = acp.getWords(current_word);
 			String tooltip_text = "<html>";
 			DefaultListModel dlm = new DefaultListModel();
-			for(int i = 0; i < candidates.size(); i++)
+			if (candidates != null)
 			{
-				dlm.addElement(new String(candidates.elementAt(i).getWord() + " " + candidates.elementAt(i).getConfidence().toString()));
-				tooltip_text += candidates.elementAt(i).getWord() + " " + candidates.elementAt(i).getConfidence() + "<br>"; 
+				for(int i = 0; i < candidates.size(); i++)
+				{
+					dlm.addElement(new String(candidates.elementAt(i).getWord() + " " + candidates.elementAt(i).getConfidence().toString()));
+					tooltip_text += candidates.elementAt(i).getWord() + " " + candidates.elementAt(i).getConfidence() + "<br>"; 
+				}
 			}
-			
-			
-			if(candidates.size() == 0)
+
+			if(candidates == null || candidates.size() == 0)
 			{
 				tooltip_text += "No Suggestions";
 			}
+
+			
 			tooltip_text += "</html>";
 			if (our_frame.getPriority() <= priority)
 			{

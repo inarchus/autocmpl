@@ -40,6 +40,7 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 	// used to prevent bad timing in searches from redrawing list with old data.  
 	long current_priority = 0;
 	long future_priority = 0;
+	String test_string = "The third thing that I need to tell you is that this thing does not think thoroughly.";
 	
 	public TestFrame()
 	{
@@ -48,11 +49,11 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 
 		setTitle("Autocompletion Tester");
 		
-		training_field = new JTextArea ();
+		training_field = new JTextArea (test_string);
 		training_field.setBorder(new SoftBevelBorder(SoftBevelBorder.LOWERED));
 		query_field = new JTextArea();
 		query_field.setBorder(new SoftBevelBorder(SoftBevelBorder.LOWERED));
-		trainButton = new JButton("Input Training Data");
+		trainButton = new JButton("Input Training Data (from edit control)");
 
 		
 		options_display = new JList();
@@ -199,6 +200,13 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 	public void caretUpdate(CaretEvent arg0) {
 		String current_text = query_field.getText();
 		future_priority++;
+
+		// this helps it reset rather than staying stuck on the previous word.  
+		if (current_text != null && current_text.length() > 0 && Character.isSpaceChar(current_text.toCharArray()[current_text.length() - 1]))
+		{
+			current_text = "";
+		}
+		
 		SearchThread st = new SearchThread(acp, current_text, options_display, query_field, this, future_priority);
 		st.start();
 	}
@@ -254,7 +262,7 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 
 
 	public void windowClosing(WindowEvent arg0) {
-		// sometimes its this one.  
+		// and sometimes its this one.  
 		System.exit(0);
 	}
 
@@ -287,7 +295,6 @@ public class TestFrame extends JFrame implements WindowListener, ActionListener,
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			SwingUtilities.updateComponentTreeUI(this);
-			//this.pack();
 	    } 
 	    catch (UnsupportedLookAndFeelException e) {
 	    }

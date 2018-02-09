@@ -42,9 +42,10 @@ public class AlphabetTrie extends Thread {
 	
 	/*
 	 * Method: getWordList
-	 * Returns: Vector<Candidate>, sorted by 'relevance,' truncated to max_size
+	 * Returns: Vector<Candidate>, sorted by 'relevance,' truncated to max_size;  This will return null if no results exist.  
 	 * 
-	 * First, and very importantly, it proceeds to the end of the word.  Then it simply searches 
+	 * First, and very importantly, it proceeds to the end of the word.  Then it searches the tree structure for words and returns their frequencies in the Candidate structures.  
+	 * 
 	 */
 	public Vector<Candidate> getWordList(String initial_fragment, int max_size)
 	{
@@ -52,9 +53,11 @@ public class AlphabetTrie extends Thread {
 		MemoResultNode memo_node = memorized_trie;
 		
 		Vector<Candidate> results = null;
-				
+
+		// in order to search, we need it in lower case because that is what the hashmap has assigned
 		initial_fragment = initial_fragment.toLowerCase();
 		
+		//search the memoized short-trie for short sequences.  
 		if (initial_fragment.length() <= default_depth)
 		{
 			for(int s = 0; s < Math.min(initial_fragment.length(), default_depth); s++)
@@ -69,7 +72,7 @@ public class AlphabetTrie extends Thread {
 				results = memo_node.getResults();
 			}
 		}
-		
+		// if not in there search the big trie.  
 		if(results == null)
 		{
 			for(int i = 0; i < initial_fragment.length(); i++)
@@ -77,6 +80,10 @@ public class AlphabetTrie extends Thread {
 				if(current_node.getSuccessors() != null && current_node.getSuccessors()[trie_map.get(initial_fragment.toCharArray()[i]).intValue()] != null)
 				{
 					current_node = current_node.getSuccessors()[trie_map.get(initial_fragment.toCharArray()[i]).intValue()];
+				}
+				else
+				{
+					return null;
 				}
 			}
 			
